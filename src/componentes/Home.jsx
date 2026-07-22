@@ -103,7 +103,7 @@ function Home({ user, isAdmin }) {
               <p className="email-text">{user.email}</p>
 
               <div className="role-box">
-                Nível de Acesso: <strong>{isAdmin ? 'Administrador (Completo)' : 'Operador (Apenas Leitura)'}</strong>
+                Nível de Acesso: <strong>{isAdmin ? 'Administrador' : 'Operador'}</strong>
               </div>
 
               {isAdmin ? (
