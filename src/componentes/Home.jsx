@@ -64,14 +64,14 @@ function Home({ user, isAdmin }) {
               </div>
             </div>
 
-            {/* Card de Relatórios atualizado com a função */}
+            {/* Card de Relatórios atualizado com a função 
             <div className="guide-item" onClick={goToRelatorios}>
               <span className="guide-icon">📊</span>
               <div>
                 <h4>Gerar Relatórios</h4>
                 <p>Filtre dados por status e período para exportar relatórios detalhados em PDF ou Excel.</p>
               </div>
-            </div> 
+            </div> */}
 
             {user && isAdmin && (
               <>
