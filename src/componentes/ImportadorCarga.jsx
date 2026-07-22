@@ -183,7 +183,7 @@ export default function ImportadorCarga() {
   return (
     <div className="importador-container">
       <button className="back-importador-btn" onClick={handleVoltar}>
-        <FiArrowLeft /> <span>Voltar ao Início</span>
+        <FiArrowLeft /> <span>Página Inicial</span>
       </button>
 
       <div className="importador-card">

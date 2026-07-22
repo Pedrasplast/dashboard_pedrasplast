@@ -233,3 +233,123 @@
     width: 100%;
   }
 }
+
+/* Classes utilitárias e de alinhamento */
+.col-centralizada {
+  text-align: center;
+}
+
+.tabela-vazia {
+  text-align: center;
+  padding: 24px;
+}
+
+/* Botão de Excluir da Tabela */
+.btn-delete-user {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-delete-user:hover {
+  background-color: #fecaca;
+}
+
+/* Overlay e Estrutura do Modal Customizado */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  background-color: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  animation: scaleUp 0.2s ease-out;
+}
+
+.modal-icon-alert {
+  color: #d97706;
+  font-size: 32px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.modal-content h3 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  font-size: 18px;
+}
+
+.modal-content p {
+  margin: 0 0 20px 0;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.btn-modal-cancelar {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background-color: #fff;
+  color: #374151;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-modal-cancelar:hover {
+  background-color: #f3f4f6;
+}
+
+.btn-modal-confirmar {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background-color: #dc2626;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-modal-confirmar:hover {
+  background-color: #b91c1c;
+}
+
+/* Animações suaves para o modal */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

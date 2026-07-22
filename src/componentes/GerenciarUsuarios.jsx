@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft } from 'react-icons/fi';
+import { FiArrowLeft, FiAlertTriangle } from 'react-icons/fi';
 import { supabase } from '../Servicos/clienteSupabase';
 import './GerenciarUsuarios.css';
 
@@ -9,6 +9,9 @@ function GerenciarUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mensagem, setMensagem] = useState({ tipo: '', texto: '' });
+  
+  // Estado para controlar o modal de confirmação de exclusão
+  const [usuarioParaExcluir, setUsuarioParaExcluir] = useState(null);
 
   // Efeito para apagar a mensagem automaticamente após 3 segundos
   useEffect(() => {
@@ -44,21 +47,18 @@ function GerenciarUsuarios() {
 
   // Atualização Otimista: A interface muda na hora, a requisição corre em background
   const alterarRegra = useCallback(async (usuarioId, novaRegra) => {
-    // 1. Atualiza visualmente na hora (feedback instantâneo)
     setUsuarios((prev) =>
       prev.map((u) => (u.id === usuarioId ? { ...u, regra: novaRegra } : u))
     );
     setMensagem({ tipo: 'sucesso', texto: 'Nível de acesso atualizado com sucesso!' });
 
     try {
-      // 2. Envia para o Supabase em background
       const { error } = await supabase
         .from('perfis')
         .update({ regra: novaRegra })
         .eq('id', usuarioId);
 
       if (error) {
-        // Se der erro no banco, reverte a alteração visual
         carregarUsuarios();
         throw error;
       }
@@ -67,12 +67,37 @@ function GerenciarUsuarios() {
     }
   }, [carregarUsuarios]);
 
+  // Executa a exclusão completa após confirmar no modal personalizado
+  const confirmarExclusao = useCallback(async () => {
+    if (!usuarioParaExcluir) return;
+
+    const { id: usuarioId, email: emailUsuario } = usuarioParaExcluir;
+    setUsuarioParaExcluir(null); // Fecha o modal
+
+    const usuariosAnteriores = usuarios;
+    setUsuarios((prev) => prev.filter((u) => u.id !== usuarioId));
+    setMensagem({ tipo: 'sucesso', texto: 'Usuário excluído completamente com sucesso!' });
+
+    try {
+      const { error } = await supabase.rpc('apagar_usuario_completo', {
+        usuario_id: usuarioId,
+      });
+
+      if (error) {
+        setUsuarios(usuariosAnteriores);
+        throw error;
+      }
+    } catch (error) {
+      setMensagem({ tipo: 'erro', texto: `Erro ao excluir usuário: ${error.message}` });
+    }
+  }, [usuarioParaExcluir, usuarios]);
+
   // Renderização otimizada das linhas da tabela
   const linhasTabela = useMemo(() => {
     if (usuarios.length === 0) {
       return (
         <tr>
-          <td colSpan="3" style={{ textAlign: 'center', padding: '24px' }}>
+          <td colSpan="4" className="tabela-vazia">
             Nenhum usuário cadastrado encontrado.
           </td>
         </tr>
@@ -87,7 +112,7 @@ function GerenciarUsuarios() {
             {user.regra === 'admin' ? 'Administrador' : 'Operador'}
           </span>
         </td>
-        <td style={{ textAlign: 'center' }}>
+        <td className="col-centralizada">
           {user.regra === 'admin' ? (
             <button
               className="btn-change-role op"
@@ -104,6 +129,14 @@ function GerenciarUsuarios() {
             </button>
           )}
         </td>
+        <td className="col-centralizada">
+          <button
+            className="btn-delete-user"
+            onClick={() => setUsuarioParaExcluir(user)}
+          >
+            Excluir
+          </button>
+        </td>
       </tr>
     ));
   }, [usuarios, alterarRegra]);
@@ -111,7 +144,7 @@ function GerenciarUsuarios() {
   return (
     <div className="gerenciar-usuarios-container">    
       <button className="btn-voltar-home" onClick={() => navigate('/')}>
-         <FiArrowLeft /> <span>Voltar ao Início</span>
+         <FiArrowLeft /> <span>Página Inicial</span>
       </button>
 
       <div className="admin-header-block">
@@ -134,13 +167,43 @@ function GerenciarUsuarios() {
               <tr>
                 <th>E-mail</th>
                 <th>Perfil Atual</th>
-                <th style={{ textAlign: 'center' }}>Ações de Permissão</th>
+                <th className="col-centralizada">Ações de Permissão</th>
+                <th className="col-centralizada">Ações</th>
               </tr>
             </thead>
             <tbody>
               {linhasTabela}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Modal Customizado de Confirmação */}
+      {usuarioParaExcluir && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-icon-alert">
+              <FiAlertTriangle />
+            </div>
+            <h3>Confirmar Exclusão</h3>
+            <p>
+              Tem certeza que deseja excluir completamente o acesso de <strong>{usuarioParaExcluir.email}</strong>? Esta ação não poderá ser desfeita.
+            </p>
+            <div className="modal-actions">
+              <button
+                className="btn-modal-cancelar"
+                onClick={() => setUsuarioParaExcluir(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn-modal-confirmar"
+                onClick={confirmarExclusao}
+              >
+                Sim, excluir
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
