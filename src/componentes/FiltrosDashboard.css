@@ -1,157 +1,643 @@
 .sidebar {
-  background: #ffffff;
-  padding: 24px;
-  border-right: 1px solid #e2e8f0;
+  width: 100%;
+  min-height: 100vh;
+  padding: 28px 24px;
+  box-sizing: border-box;
+
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  min-height: 100vh;
+  gap: 22px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f8fafc 100%
+    );
+
+  border-right: 1px solid #e2e8f0;
+  box-shadow:
+    8px 0 30px rgba(15, 23, 42, 0.04);
 }
 
 .sidebar .brand-title {
-  font-size: 1.25rem;
-  color: #1e293b;
-  margin: 0 0 8px 0;
-  font-weight: 700;
-  text-align: left;
+  margin: 0;
+  padding: 2px 2px 8px;
+
+  color: #0f172a;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
 
+/* BOTÃO VOLTAR */
+
+.sidebar .back-home-btn {
+  width: 100%;
+  min-height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  padding: 10px 14px;
+
+  background: #ffffff;
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
+
+  color: #475569;
+  font-size: 0.86rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 2px 5px rgba(15, 23, 42, 0.05);
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.sidebar .back-home-btn:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 18px rgba(37, 99, 235, 0.1);
+}
+
+.sidebar .back-home-btn:active {
+  transform: translateY(0);
+}
+
+/* ÁREA DOS FILTROS */
+
 .filter-section {
+  width: 100%;
+  min-width: 0;
+
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  box-sizing: border-box;
+  gap: 10px;
 }
 
 .filter-section .filter-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   width: 100%;
-  margin-top: 4px;
+  margin-top: 2px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.filter-section label {
+.filter-section > label,
+.filter-section .filter-header-row > label {
   display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
+  margin: 14px 0 0;
+
   color: #64748b;
-  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-align: left;
   text-transform: uppercase;
 }
 
-.filter-section .date-inputs-container {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
+.filter-section .filter-header-row > label {
+  margin: 0;
 }
 
-.filter-section input[type="date"],
-.filter-section select {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  background-color: #ffffff;
-  color: #1e293b;
-  outline: none;
-  box-sizing: border-box;
-  box-shadow: none;
-}
-
-.filter-section input[type="date"]:focus,
-.filter-section select:focus {
-  border-color: #3b82f6;
-}
-
-.filter-section select:disabled {
-  background-color: #f1f5f9;
-  cursor: not-allowed;
-  color: #94a3b8;
-}
+/* BOTÃO LIMPAR */
 
 .filter-section .clear-date-btn {
+  padding: 5px 8px;
+
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 7px;
+
   color: #ef4444;
-  font-size: 0.7rem;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+
   cursor: pointer;
-  font-weight: 700;
-  padding: 0;
-  margin: 0;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .filter-section .clear-date-btn:hover {
-  opacity: 0.8;
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
 }
 
-.filter-section .checkbox-group {
+/* CAMPOS DO PERÍODO */
+
+.filter-section .date-inputs-container {
+  width: 100%;
+
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 150px;
-  overflow-y: auto;
-  padding-right: 4px;
+  gap: 9px;
+}
+
+.calendar-field {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.calendar-trigger {
+  width: 100%;
+  min-height: 50px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+
+  padding: 9px 12px;
+  box-sizing: border-box;
+
+  background: #ffffff;
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
+
+  color: #0f172a;
+  text-align: left;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 2px 5px rgba(15, 23, 42, 0.04);
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.calendar-trigger:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  transform: translateY(-1px);
+}
+
+.calendar-trigger:focus-visible {
+  outline: none;
+  border-color: #3b82f6;
+
+  box-shadow:
+    0 0 0 3px rgba(59, 130, 246, 0.14);
+}
+
+.calendar-trigger:disabled {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.calendar-trigger span {
+  color: #64748b;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.calendar-trigger strong {
+  color: #0f172a;
+  font-size: 0.91rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.calendar-trigger:disabled strong {
+  color: #94a3b8;
+}
+
+/* POPOVER DO CALENDÁRIO */
+
+.calendar-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 4000;
+
+  width: max-content;
+  max-width: min(350px, calc(100vw - 32px));
+
+  padding: 14px;
+  box-sizing: border-box;
+
+  background: #ffffff;
+  border: 1px solid #dbe3ee;
+  border-radius: 14px;
+
+  box-shadow:
+    0 22px 55px rgba(15, 23, 42, 0.18),
+    0 8px 18px rgba(15, 23, 42, 0.08);
+
+  animation: calendarioAbrir 0.16s ease-out;
+}
+
+@keyframes calendarioAbrir {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* DAYPICKER */
+
+/* DAYPICKER */
+
+.calendar-popover .rdp-root {
+  --rdp-accent-color: #2563eb;
+  --rdp-accent-background-color: #dbeafe;
+  --rdp-day-height: 38px;
+  --rdp-day-width: 38px;
+  --rdp-day_button-height: 36px;
+  --rdp-day_button-width: 36px;
+
+  margin: 0;
+  color: #1e293b;
+  font-size: 0.84rem;
+}
+
+.calendar-popover .rdp-months {
+  justify-content: center;
+}
+
+.calendar-popover .rdp-month {
+  width: 100%;
+}
+
+.calendar-popover .rdp-month_caption {
+  min-height: 42px;
+  padding: 0 40px;
+}
+
+.calendar-popover .rdp-caption_label {
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.calendar-popover .rdp-nav {
+  top: 3px;
+}
+
+.calendar-popover .rdp-button_previous,
+.calendar-popover .rdp-button_next {
+  width: 34px;
+  height: 34px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #475569;
+  transition: 0.2s ease;
+}
+
+.calendar-popover .rdp-button_previous:hover,
+.calendar-popover .rdp-button_next:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.calendar-popover .rdp-weekday {
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.calendar-popover .rdp-day {
+  padding: 2px;
+}
+
+.calendar-popover .rdp-day_button {
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #334155;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.calendar-popover .rdp-day_button:hover {
+  background: #eff6ff;
+  color: #1d4ed8;
+  transform: scale(1.04);
+}
+
+.calendar-popover .rdp-selected .rdp-day_button {
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+}
+
+.calendar-popover .rdp-today:not(.rdp-selected) .rdp-day_button {
+  border: 1px solid #93c5fd;
+  background: #f8fbff;
+  color: #1d4ed8;
+  font-weight: 800;
+}
+
+/* DIAS COM DADOS - visual novo, sem pontinhos */
+.calendar-popover .calendar-day-has-data .rdp-day_button {
+  background: #f1f5f9;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.calendar-popover .calendar-day-has-data .rdp-day_button:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* remove os pontinhos */
+.calendar-popover .calendar-day-has-data .rdp-day_button::after {
+  display: none;
+  content: none;
+}
+
+/* dia selecionado continua com destaque principal */
+.calendar-popover .rdp-selected.calendar-day-has-data .rdp-day_button {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+/* DIAS SEM DADOS */
+.calendar-popover .rdp-disabled {
+  opacity: 1;
+}
+
+.calendar-popover .rdp-disabled .rdp-day_button {
+  background: transparent;
+  color: #cbd5e1;
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
+  transform: none;
+}
+
+.calendar-popover .rdp-outside {
+  opacity: 0.22;
+}
+
+/* TEXTOS DO CALENDÁRIO */
+
+.calendar-info {
+  display: block;
+  margin-top: 10px;
+  padding-top: 9px;
+
+  border-top: 1px solid #f1f5f9;
+
+  color: #64748b;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.calendar-empty {
+  display: block;
   margin-top: 4px;
+  padding: 8px 10px;
+
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+
+  color: #dc2626;
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+
+/* SELECTS */
+
+.filter-section select {
+  width: 100%;
+  min-height: 44px;
+
+  padding: 10px 38px 10px 12px;
+  box-sizing: border-box;
+
+  background-color: #ffffff;
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
+
+  color: #1e293b;
+  font-size: 0.9rem;
+  font-weight: 500;
+
+  outline: none;
+  cursor: pointer;
+
+  box-shadow:
+    0 2px 5px rgba(15, 23, 42, 0.04);
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.filter-section select:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.filter-section select:focus-visible {
+  border-color: #3b82f6;
+
+  box-shadow:
+    0 0 0 3px rgba(59, 130, 246, 0.14);
+}
+
+.filter-section select:disabled {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #a7b2c2;
+
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* CHECKBOXES */
+
+.filter-section .checkbox-group {
+  width: 100%;
+  max-height: 185px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  padding: 4px 0;
+
+  overflow-y: auto;
 }
 
 .filter-section .checkbox-label {
+  width: 100%;
+
   display: flex;
   align-items: center;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: #334155;
-  font-weight: normal;
+  gap: 10px;
+
   margin: 0;
-  gap: 8px;
+  padding: 9px 10px;
+  box-sizing: border-box;
+
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
+
+  color: #334155;
+  font-size: 0.88rem;
+  font-weight: 600;
   text-transform: none;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.filter-section .checkbox-label:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  transform: translateX(2px);
+}
+
+.filter-section .checkbox-label:has(input:checked) {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
 }
 
 .filter-section .checkbox-label input[type="checkbox"] {
-  display: inline-block;
-  accent-color: #3b82f6;
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
+  flex: 0 0 auto;
+
+  width: 17px;
+  height: 17px;
   margin: 0;
-}
 
-.sidebar .back-home-btn {
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  padding: 10px 16px;
-  border-radius: 6px;
-  color: #475569;
-  font-size: 0.85rem;
-  font-weight: 600;
+  accent-color: #2563eb;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  justify-content: center;
-  box-sizing: border-box;
 }
 
-.sidebar .back-home-btn:hover {
-  background: #e2e8f0;
-  color: #0f172a;
-  border-color: #cbd5e1;
+.filter-section .checkbox-label span {
+  flex: 1;
+  min-width: 0;
+
+  overflow-wrap: anywhere;
 }
+
+/* SCROLLBAR */
+
+.filter-section .checkbox-group::-webkit-scrollbar {
+  width: 5px;
+}
+
+.filter-section .checkbox-group::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.filter-section .checkbox-group::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+/* RESPONSIVO */
 
 @media (max-width: 1024px) {
   .sidebar {
+    min-height: auto;
+
     border-right: none;
     border-bottom: 1px solid #e2e8f0;
-    width: 100%;
-    min-height: auto;
+  }
+
+  .filter-section .date-inputs-container {
+    display: grid;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .sidebar {
+    padding: 18px;
+    gap: 18px;
+  }
+
+  .filter-section .date-inputs-container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .calendar-popover {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+
+    width: calc(100vw - 32px);
+    max-width: 350px;
+
+    transform: translate(-50%, -50%);
+  }
+
+  @keyframes calendarioAbrir {
+    from {
+      opacity: 0;
+      transform:
+        translate(-50%, calc(-50% - 8px));
+    }
+
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
   }
 }

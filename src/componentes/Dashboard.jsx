@@ -1,17 +1,133 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, {
+    useEffect,
+    useMemo,
+    useState
+} from 'react';
+
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../Servicos/clienteSupabase';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 import FiltrosDashboard from './FiltrosDashboard';
-import { CheckCircle2, XCircle, Gauge, Clock, PauseCircle, Calculator, Target } from 'lucide-react';
+
+import {
+    CheckCircle2,
+    XCircle,
+    Clock,
+    PauseCircle,
+    Calculator,
+    Target
+} from 'lucide-react';
+
 import './Dashboard.css';
 
-export default function Dashboard() {
-    const navigate = useNavigate();
-    const [rawDados, setRawDados] = useState([]);
-    const [loading, setLoading] = useState(true);
+const TAMANHO_PAGINA = 1000;
 
-    const [filtros, setFiltros] = useState({
+/*
+ * Extrai a data no formato YYYY-MM-DD.
+ *
+ * Prioriza lista_de_data porque ela já representa
+ * diretamente o dia do registro no banco.
+ */
+const extrairDataISORegistro = (registro) => {
+    const valorData =
+        registro?.lista_de_data ||
+        registro?.inicio ||
+        registro?.inicio_dia ||
+        registro?.data ||
+        null;
+
+    if (!valorData) {
+        return null;
+    }
+
+    const textoData =
+        String(valorData).trim();
+
+    const correspondencia =
+        textoData.match(
+            /^(\d{4})-(\d{2})-(\d{2})/
+        );
+
+    if (correspondencia) {
+        return [
+            correspondencia[1],
+            correspondencia[2],
+            correspondencia[3]
+        ].join('-');
+    }
+
+    const data =
+        new Date(valorData);
+
+    if (
+        Number.isNaN(
+            data.getTime()
+        )
+    ) {
+        return null;
+    }
+
+    const ano =
+        data.getFullYear();
+
+    const mes =
+        String(
+            data.getMonth() + 1
+        ).padStart(2, '0');
+
+    const dia =
+        String(
+            data.getDate()
+        ).padStart(2, '0');
+
+    return `${ano}-${mes}-${dia}`;
+};
+
+const ordenarValores = (valores) => {
+    return [
+        ...new Set(
+            valores.filter(
+                (valor) =>
+                    valor !== null &&
+                    valor !== undefined &&
+                    String(valor).trim() !== ''
+            )
+        )
+    ].sort((a, b) =>
+        String(a).localeCompare(
+            String(b),
+            'pt-BR',
+            {
+                numeric: true,
+                sensitivity: 'base'
+            }
+        )
+    );
+};
+
+export default function Dashboard() {
+    const navigate =
+        useNavigate();
+
+    const [
+        rawDados,
+        setRawDados
+    ] = useState([]);
+
+    const [
+        loading,
+        setLoading
+    ] = useState(true);
+
+    const [
+        erro,
+        setErro
+    ] = useState('');
+
+    const [
+        filtros,
+        setFiltros
+    ] = useState({
         injetora: 'Todos',
         cod_prod: 'Todos',
         tipo: [],
@@ -19,169 +135,478 @@ export default function Dashboard() {
         dataFim: ''
     });
 
+    /*
+     * Busca todos os registros da tabela.
+     *
+     * A paginação contorna o limite padrão
+     * de mil registros por consulta.
+     */
     useEffect(() => {
+        let componenteAtivo = true;
+
         const fetchDados = async () => {
             setLoading(true);
+            setErro('');
+
             let todosOsDados = [];
             let pagina = 0;
-            const tamanhoPagina = 1000;
             let continuar = true;
 
             try {
                 while (continuar) {
-                    const { data, error } = await supabase
-                        .from('carga_maquina')
+                    const inicioPagina =
+                        pagina *
+                        TAMANHO_PAGINA;
+
+                    const fimPagina =
+                        inicioPagina +
+                        TAMANHO_PAGINA -
+                        1;
+
+                    const {
+                        data,
+                        error
+                    } = await supabase
+                        .from(
+                            'carga_maquina'
+                        )
                         .select('*')
-                        .range(pagina * tamanhoPagina, (pagina + 1) * tamanhoPagina - 1);
+                        .range(
+                            inicioPagina,
+                            fimPagina
+                        );
 
                     if (error) {
-                        console.error("Erro ao carregar dados:", error);
+                        throw error;
+                    }
+
+                    if (
+                        !data ||
+                        data.length === 0
+                    ) {
+                        continuar = false;
                         break;
                     }
 
-                    if (data && data.length > 0) {
-                        todosOsDados = [...todosOsDados, ...data];
-                        if (data.length < tamanhoPagina) {
-                            continuar = false;
-                        } else {
-                            pagina++;
-                        }
-                    } else {
+                    todosOsDados = [
+                        ...todosOsDados,
+                        ...data
+                    ];
+
+                    if (
+                        data.length <
+                        TAMANHO_PAGINA
+                    ) {
                         continuar = false;
+                    } else {
+                        pagina += 1;
                     }
                 }
 
-                setRawDados(todosOsDados);
-            } catch (err) {
-                console.error("Erro inesperado ao buscar dados:", err);
+                if (componenteAtivo) {
+                    setRawDados(
+                        todosOsDados
+                    );
+                }
+            } catch (error) {
+                console.error(
+                    'Erro ao carregar dados:',
+                    error
+                );
+
+                if (componenteAtivo) {
+                    setErro(
+                        error?.message ||
+                        'Não foi possível carregar os dados de produção.'
+                    );
+                }
             } finally {
-                setLoading(false);
+                if (componenteAtivo) {
+                    setLoading(false);
+                }
             }
         };
 
-        fetchDados();
+        void fetchDados();
+
+        return () => {
+            componenteAtivo = false;
+        };
     }, []);
 
-    const tiposDisponiveis = useMemo(() => {
-        return [...new Set(rawDados.map(d => d.tipo))].filter(t => t && t.toString().trim() !== '');
-    }, [rawDados]);
+    /*
+     * Tipos disponíveis no filtro.
+     */
+    const tiposDisponiveis =
+        useMemo(() => {
+            return ordenarValores(
+                rawDados.map(
+                    (registro) =>
+                        registro.tipo
+                )
+            );
+        }, [rawDados]);
 
-    const produtosDisponiveis = useMemo(() => {
-        const filtrado = filtros.injetora === 'Todos'
-            ? rawDados
-            : rawDados.filter(d => d.injetora === filtros.injetora);
-        return [...new Set(filtrado.map(d => d.cod_prod))];
-    }, [rawDados, filtros.injetora]);
+    /*
+     * Produtos disponíveis conforme
+     * a injetora selecionada.
+     */
+    const produtosDisponiveis =
+        useMemo(() => {
+            const baseProdutos =
+                filtros.injetora ===
+                'Todos'
+                    ? rawDados
+                    : rawDados.filter(
+                        (registro) =>
+                            registro.injetora ===
+                            filtros.injetora
+                    );
 
-    const dadosFiltrados = useMemo(() => {
-        const inicioTs = filtros.dataInicio ? new Date(filtros.dataInicio).setHours(0, 0, 0, 0) : null;
-        const fimTs = filtros.dataFim ? new Date(filtros.dataFim).setHours(23, 59, 59, 999) : null;
-        const tiposSet = new Set(filtros.tipo);
+            return ordenarValores(
+                baseProdutos.map(
+                    (registro) =>
+                        registro.cod_prod
+                )
+            );
+        }, [
+            rawDados,
+            filtros.injetora
+        ]);
 
-        return rawDados.filter(item => {
-            if (filtros.injetora !== 'Todos' && item.injetora !== filtros.injetora) return false;
-            if (filtros.cod_prod !== 'Todos' && item.cod_prod !== filtros.cod_prod) return false;
-            if (tiposSet.size > 0 && !tiposSet.has(item.tipo)) return false;
+    /*
+     * Aplica somente:
+     *
+     * - injetora;
+     * - produto;
+     * - período.
+     *
+     * O Tipo NÃO é aplicado nesta base.
+     *
+     * Isso impede que Conforme, Danificadas,
+     * Qualidade e Hora Trabalhada fiquem zerados.
+     */
+    const dadosFiltrados =
+        useMemo(() => {
+            return rawDados.filter(
+                (registro) => {
+                    if (
+                        filtros.injetora !==
+                            'Todos' &&
+                        registro.injetora !==
+                            filtros.injetora
+                    ) {
+                        return false;
+                    }
 
-            if (inicioTs || fimTs) {
-                const dataItemTs = new Date(item.inicio).getTime();
-                if (inicioTs && dataItemTs < inicioTs) return false;
-                if (fimTs && dataItemTs > fimTs) return false;
-            }
+                    if (
+                        filtros.cod_prod !==
+                            'Todos' &&
+                        registro.cod_prod !==
+                            filtros.cod_prod
+                    ) {
+                        return false;
+                    }
 
-            return true;
-        });
-    }, [rawDados, filtros]);
+                    const dataRegistro =
+                        extrairDataISORegistro(
+                            registro
+                        );
 
-    const metrics = useDashboardMetrics(dadosFiltrados);
+                    if (
+                        filtros.dataInicio
+                    ) {
+                        if (
+                            !dataRegistro ||
+                            dataRegistro <
+                                filtros.dataInicio
+                        ) {
+                            return false;
+                        }
+                    }
+
+                    if (
+                        filtros.dataFim
+                    ) {
+                        if (
+                            !dataRegistro ||
+                            dataRegistro >
+                                filtros.dataFim
+                        ) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                }
+            );
+        }, [
+            rawDados,
+            filtros.injetora,
+            filtros.cod_prod,
+            filtros.dataInicio,
+            filtros.dataFim
+        ]);
+
+    /*
+     * O Tipo é enviado separadamente.
+     *
+     * Ele será usado pelo hook somente para:
+     *
+     * - incluir sábado e domingo no cartão
+     *   Hora Parada quando Tipo 3 estiver ativo.
+     */
+    const metrics =
+        useDashboardMetrics(
+            dadosFiltrados,
+            filtros.tipo
+        );
+
+    const maiorMotivo =
+        metrics?.motivos?.[0]?.value ||
+        0;
 
     if (loading) {
-        return <div className="loading-spinner">Processando dados de produção...</div>;
+        return (
+            <div className="loading-spinner">
+                Processando dados de produção...
+            </div>
+        );
     }
 
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
-                <button className="back-home-btn" onClick={() => navigate('/')}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <button
+                    type="button"
+                    className="back-home-btn"
+                    onClick={() =>
+                        navigate('/')
+                    }
+                >
+                    <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                    >
                         <path d="M19 12H5M12 19l-7-7 7-7" />
                     </svg>
-                    <span>Página Inicial</span>
+
+                    <span>
+                        Página Inicial
+                    </span>
                 </button>
 
-                <h2 className="brand-title">Pedrasplast</h2>
+                <h2 className="brand-title">
+                    Pedrasplast
+                </h2>
 
-                {/* Componente de Filtros Reutilizável com a flag exibirMp={false} */}
                 <FiltrosDashboard
                     filtros={filtros}
                     setFiltros={setFiltros}
-                    tiposDisponiveis={tiposDisponiveis}
-                    produtosDisponiveis={produtosDisponiveis}
+                    tiposDisponiveis={
+                        tiposDisponiveis
+                    }
+                    produtosDisponiveis={
+                        produtosDisponiveis
+                    }
                     rawDados={rawDados}
                     exibirMp={false}
                 />
             </aside>
 
             <main className="main-content">
-                <header className="dashboard-header"><h1>Dashboard de Produção</h1></header>
+                <header className="dashboard-header">
+                    <h1>
+                        Dashboard de Produção
+                    </h1>
+                </header>
+
+                {erro && (
+                    <div className="dashboard-error">
+                        {erro}
+                    </div>
+                )}
+
                 <section className="kpi-grid">
-
                     <div className="kpi-card verde">
-                        <CheckCircle2 size={24} color="#16a34a" />
-                        <span>CONFORME</span>
-                        <strong>{Number(metrics?.totalConforme || 0).toLocaleString('pt-BR')}</strong>
+                        <CheckCircle2
+                            size={24}
+                            color="#16a34a"
+                        />
+
+                        <span>
+                            CONFORME
+                        </span>
+
+                        <strong>
+                            {Number(
+                                metrics
+                                    ?.totalConforme ||
+                                0
+                            ).toLocaleString(
+                                'pt-BR'
+                            )}
+                        </strong>
                     </div>
 
                     <div className="kpi-card vermelho">
-                        <XCircle size={20} color="#dc2626" />
-                        <span>DANIFICADAS</span>
-                        <strong>{Number(metrics?.totalDanificadas || 0).toLocaleString('pt-BR')}</strong>
+                        <XCircle
+                            size={20}
+                            color="#dc2626"
+                        />
+
+                        <span>
+                            DANIFICADAS
+                        </span>
+
+                        <strong>
+                            {Number(
+                                metrics
+                                    ?.totalDanificadas ||
+                                0
+                            ).toLocaleString(
+                                'pt-BR'
+                            )}
+                        </strong>
                     </div>
 
                     <div className="kpi-card verde">
-                        <Target size={20} color="#3b82f6" />
-                        <span>QUALIDADE</span>
-                        <strong>{Number(metrics?.qualidade || 0).toFixed(2)} %</strong>
+                        <Target
+                            size={20}
+                            color="#3b82f6"
+                        />
+
+                        <span>
+                            QUALIDADE
+                        </span>
+
+                        <strong>
+                            {Number(
+                                metrics?.qualidade ||
+                                0
+                            ).toFixed(2)}{' '}
+                            %
+                        </strong>
                     </div>
 
                     <div className="kpi-card verde">
-                        <Clock size={20} color="#6b7280" />
-                        <span>HORA TRABALHADA</span>
-                        <strong>{metrics?.horasTrabalhadas || 0} hrs</strong>
+                        <Clock
+                            size={20}
+                            color="#6b7280"
+                        />
+
+                        <span>
+                            HORA TRABALHADA
+                        </span>
+
+                        <strong>
+                            {metrics
+                                ?.horasTrabalhadas ||
+                                '00:00'}{' '}
+                            hrs
+                        </strong>
                     </div>
 
                     <div className="kpi-card vermelho">
-                        <PauseCircle size={20} color="#dc2626" />
-                        <span>HORA PARADA</span>
-                        <strong>{metrics?.horasParadas || 0} hrs</strong>
+                        <PauseCircle
+                            size={20}
+                            color="#dc2626"
+                        />
+
+                        <span>
+                            HORA PARADA
+                        </span>
+
+                        <strong>
+                            {metrics
+                                ?.horasParadas ||
+                                '00:00'}{' '}
+                            hrs
+                        </strong>
                     </div>
 
                     <div className="kpi-card verde">
-                        <Calculator size={20} color="#6b7280" />
-                        <span>TOTAL DE HORAS</span>
-                        <strong>{metrics?.horasTotais || 0} hrs</strong>
+                        <Calculator
+                            size={20}
+                            color="#6b7280"
+                        />
+
+                        <span>
+                            TOTAL DE HORAS
+                        </span>
+
+                        <strong>
+                            {metrics
+                                ?.horasTotais ||
+                                '00:00'}{' '}
+                            hrs
+                        </strong>
                     </div>
                 </section>
 
                 <section className="chart-container">
-                    <h3>MOTIVOS DE PARADA</h3>
+                    <h3>
+                        MOTIVOS DE PARADA
+                    </h3>
+
                     <div className="motivos-list">
-                        {(metrics?.motivos || []).map((item, i) => (
-                            <div key={i} className="motivo-bar">
-                                <div className="label-row">
-                                    <span>{item.name}</span>
-                                    <span>{item.formattedValue}</span>
-                                </div>
-                                <div className="progress-bg">
+                        {(metrics?.motivos ||
+                            []).length === 0 ? (
+                            <p className="sem-dados">
+                                Nenhum motivo de parada encontrado.
+                            </p>
+                        ) : (
+                            (
+                                metrics?.motivos ||
+                                []
+                            ).map((item) => {
+                                const largura =
+                                    maiorMotivo > 0
+                                        ? Math.min(
+                                            100,
+                                            (
+                                                item.value /
+                                                maiorMotivo
+                                            ) * 100
+                                        )
+                                        : 0;
+
+                                return (
                                     <div
-                                        className="progress-fill"
-                                        style={{
-                                            width: `${metrics?.motivos?.length > 0 ? (item.value / (metrics.motivos[0].value * 1.01)) * 100 : 0}%`
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        ))}
+                                        key={item.name}
+                                        className="motivo-bar"
+                                    >
+                                        <div className="label-row">
+                                            <span>
+                                                {item.name}
+                                            </span>
+
+                                            <span>
+                                                {
+                                                    item.formattedValue
+                                                }
+                                            </span>
+                                        </div>
+
+                                        <div className="progress-bg">
+                                            <div
+                                                className="progress-fill"
+                                                style={{
+                                                    width: `${largura}%`
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
                     </div>
                 </section>
             </main>

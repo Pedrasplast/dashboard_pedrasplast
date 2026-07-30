@@ -1,181 +1,410 @@
 import { useMemo } from 'react';
 
-// Converte HH:MM:SS ou número decimal (fração de dia do banco) para horas decimais reais
-const converterTempoParaHoras = (tempoStr) => {
-    if (tempoStr === null || tempoStr === undefined || tempoStr === "") return 0;
-
-    // Se for número, o banco está salvando como fração de dia (ex: 0.041667 = 1 dia / 24).
-    // Multiplicamos por 24 para transformar em horas reais.
-    if (typeof tempoStr === "number") {
-        return tempoStr * 24;
+// Converte HH:MM:SS ou número decimal para horas decimais
+const converterTempoParaHoras = (tempo) => {
+    if (
+        tempo === null ||
+        tempo === undefined ||
+        tempo === ''
+    ) {
+        return 0;
     }
 
-    const str = String(tempoStr);
+    // Número armazenado como fração de dia
+    if (typeof tempo === 'number') {
+        return tempo * 24;
+    }
 
-    // Se contiver ":", assume o formato de texto HH:MM:SS
-    if (str.includes(":")) {
-        const partes = str.split(":").map(Number);
+    const texto = String(tempo).trim();
+
+    // Duração no formato HH:MM:SS
+    if (texto.includes(':')) {
+        const partes = texto
+            .split(':')
+            .map(Number);
+
         const horas = partes[0] || 0;
         const minutos = partes[1] || 0;
         const segundos = partes[2] || 0;
-        return horas + (minutos / 60) + (segundos / 3600);
+
+        return (
+            horas +
+            minutos / 60 +
+            segundos / 3600
+        );
     }
 
-    // Se for uma string numérica, converte para float e também aplica a conversão de fração de dia
-    const num = parseFloat(str);
-    if (!isNaN(num)) {
-        return num * 24;
+    const numero = Number.parseFloat(
+        texto.replace(',', '.')
+    );
+
+    if (Number.isFinite(numero)) {
+        return numero * 24;
     }
 
     return 0;
 };
 
-// Formata horas decimais para HH:MM:SS (suportando mais de 24h)
-const formatarHorasParaHHMMSS = (totalHoras) => {
-    if (!totalHoras || isNaN(totalHoras)) {
-        return "00:00:00";
+// Formata horas decimais em HH:MM:SS
+const formatarHorasParaHHMMSS = (
+    totalHoras
+) => {
+    if (
+        !Number.isFinite(totalHoras) ||
+        totalHoras <= 0
+    ) {
+        return '00:00:00';
     }
 
-    const segundosTotais = Math.round(totalHoras * 3600);
+    const segundosTotais = Math.round(
+        totalHoras * 3600
+    );
 
-    const horas = Math.floor(segundosTotais / 3600);
-    const minutos = Math.floor((segundosTotais % 3600) / 60);
-    const segundos = segundosTotais % 60;
+    const horas = Math.floor(
+        segundosTotais / 3600
+    );
 
-    return `${String(horas).padStart(2, "0")}:${String(minutos).padStart(2, "0")}:${String(segundos).padStart(2, "0")}`;
+    const minutos = Math.floor(
+        (segundosTotais % 3600) / 60
+    );
+
+    const segundos =
+        segundosTotais % 60;
+
+    return `${String(horas).padStart(
+        2,
+        '0'
+    )}:${String(minutos).padStart(
+        2,
+        '0'
+    )}:${String(segundos).padStart(
+        2,
+        '0'
+    )}`;
 };
 
-
-// Formata horas decimais para HH:MM (suportando mais de 24h)
-const formatarHorasParaHHMM = (totalHoras) => {
-    if (!totalHoras || isNaN(totalHoras)) {
-        return "00:00";
+// Formata horas decimais em HH:MM
+const formatarHorasParaHHMM = (
+    totalHoras
+) => {
+    if (
+        !Number.isFinite(totalHoras) ||
+        totalHoras <= 0
+    ) {
+        return '00:00';
     }
 
-    const minutosTotais = Math.round(totalHoras * 60);
+    const minutosTotais = Math.round(
+        totalHoras * 60
+    );
 
-    const horas = Math.floor(minutosTotais / 60);
-    const minutos = minutosTotais % 60;
+    const horas = Math.floor(
+        minutosTotais / 60
+    );
 
-    return `${String(horas).padStart(2, "0")}:${String(minutos).padStart(2, "0")}`;
+    const minutos =
+        minutosTotais % 60;
+
+    return `${String(horas).padStart(
+        2,
+        '0'
+    )}:${String(minutos).padStart(
+        2,
+        '0'
+    )}`;
 };
 
-
-// Normaliza status
-const normalizarStatus = (status) => {
-    return String(status || "")
+// Normaliza textos para comparação
+const normalizarTexto = (valor) => {
+    return String(valor || '')
         .trim()
         .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
 };
 
+// Normaliza os tipos
+const normalizarTipo = (tipo) => {
+    return normalizarTexto(tipo)
+        .replace(/\s+/g, '');
+};
 
-export const useDashboardMetrics = (dados) => {
+// Verifica se o Tipo 3 está selecionado
+const tipo3EstaSelecionado = (
+    tiposSelecionados
+) => {
+    const tipos = Array.isArray(
+        tiposSelecionados
+    )
+        ? tiposSelecionados
+        : [tiposSelecionados];
 
+    return tipos.some((tipo) => {
+        const valorNormalizado =
+            normalizarTipo(tipo);
+
+        const numeroEncontrado =
+            valorNormalizado.match(/\d+/);
+
+        return (
+            numeroEncontrado &&
+            Number(numeroEncontrado[0]) === 3
+        );
+    });
+};
+
+export const useDashboardMetrics = (
+    dados,
+    tiposSelecionados = []
+) => {
     return useMemo(() => {
+        const safeDados =
+            Array.isArray(dados)
+                ? dados
+                : [];
 
-        const safeDados = Array.isArray(dados) ? dados : [];
+        const listaTiposSelecionados =
+            Array.isArray(tiposSelecionados)
+                ? tiposSelecionados
+                : [tiposSelecionados];
 
-        if (safeDados.length === 0) {
-            return {
-                totalConforme: 0,
-                totalDanificadas: 0,
-                qualidade: "0.0",
-                horasTrabalhadas: "00:00",
-                horasParadas: "00:00",
-                horasTotais: "00:00",
-                motivos: []
-            };
-        }
-
-        const totalConforme = safeDados.reduce(
-            (acc, cur) => acc + Number(cur.conforme || 0),
-            0
-        );
-
-        const totalDanificadas = safeDados.reduce(
-            (acc, cur) => acc + Number(cur.danificada || 0),
-            0
-        );
-
-        const totalProduzido = totalConforme + totalDanificadas;
-
-        const qualidade = totalProduzido > 0
-            ? (totalConforme / totalProduzido) * 100
-            : 0;
-
-            // HORAS PRODUZINDO      
-        const horasTrabalhadasDec = safeDados
-            .filter(cur =>
-                normalizarStatus(cur.status) === "produzindo"
-            )
-            .reduce(
-                (acc, cur) =>
-                    acc + converterTempoParaHoras(cur.duracao),
-                0
+        /*
+         * Tipos usados somente para filtrar
+         * o gráfico de motivos.
+         */
+        const tiposSelecionadosSet =
+            new Set(
+                listaTiposSelecionados
+                    .filter(
+                        (tipo) =>
+                            tipo !== null &&
+                            tipo !== undefined &&
+                            String(tipo).trim() !== ''
+                    )
+                    .map(normalizarTipo)
             );
 
-      
-        // HORAS INDISPONÍVEL       
-        const horasParadasDec = safeDados
-            .filter(cur =>
-                normalizarStatus(cur.status) === "indisponivel"
-            )
-            .reduce(
-                (acc, cur) =>
-                    acc + converterTempoParaHoras(cur.duracao),
-                0
+        const existeFiltroTipo =
+            tiposSelecionadosSet.size > 0;
+
+        /*
+         * Tipo 3 controla a inclusão das três
+         * descrições no cartão Hora Parada.
+         */
+        const incluirParadasTipo3NoCartao =
+            tipo3EstaSelecionado(
+                listaTiposSelecionados
             );
 
-        const horasTotaisDec =
-            horasTrabalhadasDec + horasParadasDec;
+        let totalConforme = 0;
+        let totalDanificadas = 0;
 
-        // ==========================
-        // MOTIVOS DAS PARADAS
-        // ==========================
-        const motivosMap = safeDados.reduce((acc, cur) => {
+        let horasTrabalhadasDec = 0;
 
-            const status = normalizarStatus(cur.status);
+        /*
+         * Total completo das paradas.
+         * Utilizado para manter o cartão
+         * Total de Horas como estava.
+         */
+        let horasParadasTotalDec = 0;
 
-            if (
-                status === "indisponivel" &&
-                cur.motivo
-            ) {
-                acc[cur.motivo] =
-                    (acc[cur.motivo] || 0) +
-                    converterTempoParaHoras(cur.duracao);
+        /*
+         * Valor exibido no cartão Hora Parada.
+         */
+        let horasParadasCartaoDec = 0;
+
+        const motivosMap = {};
+
+        for (const registro of safeDados) {
+            /*
+             * Esses indicadores não são alterados
+             * pelo filtro de tipo.
+             */
+            totalConforme += Number(
+                registro.conforme || 0
+            );
+
+            totalDanificadas += Number(
+                registro.danificada || 0
+            );
+
+            const status =
+                normalizarTexto(
+                    registro.status
+                );
+
+            const duracao =
+                converterTempoParaHoras(
+                    registro.duracao
+                );
+
+            /*
+             * Hora Trabalhada permanece igual.
+             */
+            if (status === 'produzindo') {
+                horasTrabalhadasDec +=
+                    duracao;
+
+                continue;
             }
 
-            return acc;
+            if (status !== 'indisponivel') {
+                continue;
+            }
 
-        }, {});
+            /*
+             * Soma todas as paradas para manter
+             * o Total de Horas completo.
+             */
+            horasParadasTotalDec +=
+                duracao;
+
+            const motivoNormalizado =
+                normalizarTexto(
+                    registro.motivo
+                );
+
+            /*
+             * As três descrições associadas
+             * ao Tipo 3 são:
+             *
+             * - Final de Semana/ sem expediente
+             * - Feriado sem expediente
+             * - Turno Reduzido
+             */
+            const ehParadaTipo3 =
+                motivoNormalizado.includes(
+                    'final de semana'
+                ) ||
+                motivoNormalizado.includes(
+                    'feriado sem expediente'
+                ) ||
+                motivoNormalizado.includes(
+                    'turno reduzido'
+                );
+
+            /*
+             * Demais motivos entram sempre
+             * no cartão Hora Parada.
+             */
+            if (!ehParadaTipo3) {
+                horasParadasCartaoDec +=
+                    duracao;
+            }
+
+            /*
+             * As três descrições acima entram
+             * somente quando o Tipo 3 estiver
+             * selecionado.
+             */
+            if (
+                ehParadaTipo3 &&
+                incluirParadasTipo3NoCartao
+            ) {
+                horasParadasCartaoDec +=
+                    duracao;
+            }
+
+            /*
+             * FILTRO DO GRÁFICO
+             *
+             * Sem tipo marcado:
+             * mostra todos os motivos.
+             *
+             * Com tipo marcado:
+             * mostra apenas os motivos dos
+             * tipos selecionados.
+             */
+            const tipoRegistro =
+                normalizarTipo(
+                    registro.tipo
+                );
+
+            const incluirNoGrafico =
+                !existeFiltroTipo ||
+                tiposSelecionadosSet.has(
+                    tipoRegistro
+                );
+
+            if (
+                incluirNoGrafico &&
+                registro.motivo
+            ) {
+                const motivo =
+                    String(
+                        registro.motivo
+                    ).trim();
+
+                motivosMap[motivo] =
+                    (
+                        motivosMap[motivo] ||
+                        0
+                    ) + duracao;
+            }
+        }
+
+        const totalProduzido =
+            totalConforme +
+            totalDanificadas;
+
+        const qualidade =
+            totalProduzido > 0
+                ? (
+                    totalConforme /
+                    totalProduzido
+                ) * 100
+                : 0;
+
+        /*
+         * Mantém o Total de Horas como estava:
+         * trabalhadas + todas as paradas.
+         */
+        const horasTotaisDec =
+            horasTrabalhadasDec +
+            horasParadasCartaoDec;
 
         return {
             totalConforme,
             totalDanificadas,
-            qualidade: qualidade.toFixed(1),
 
-            // KPIs
+            qualidade:
+                qualidade.toFixed(1),
+
             horasTrabalhadas:
-                formatarHorasParaHHMM(horasTrabalhadasDec),
+                formatarHorasParaHHMM(
+                    horasTrabalhadasDec
+                ),
 
             horasParadas:
-                formatarHorasParaHHMM(horasParadasDec),
+                formatarHorasParaHHMM(
+                    horasParadasCartaoDec
+                ),
 
             horasTotais:
-                formatarHorasParaHHMM(horasTotaisDec),
+                formatarHorasParaHHMM(
+                    horasTotaisDec
+                ),
 
             motivos:
                 Object.entries(motivosMap)
-                    .map(([name, value]) => ({
-                        name,
-                        value,
-                        formattedValue:
-                            formatarHorasParaHHMMSS(value)
-                    }))
-                    .sort((a, b) => b.value - a.value)
-        };
+                    .map(
+                        ([name, value]) => ({
+                            name,
+                            value,
 
-    }, [dados]);
+                            formattedValue:
+                                formatarHorasParaHHMMSS(
+                                    value
+                                )
+                        })
+                    )
+                    .sort(
+                        (a, b) =>
+                            b.value - a.value
+                    )
+        };
+    }, [
+        dados,
+        tiposSelecionados
+    ]);
 };
