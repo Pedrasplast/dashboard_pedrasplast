@@ -521,7 +521,17 @@ export default function Dashboard() {
                         </strong>
                     </div>
 
-                    <div className="kpi-card vermelho">
+                    <div className="kpi-card vermelho kpi-horas-trabalhadas">
+                        <div className="dias-trabalhados-indicador">
+                            <small>
+                                DIAS
+                            </small>
+
+                            <strong>
+                                {metrics?.diasParados || '0d 00h'}
+                            </strong>
+                        </div>
+
                         <PauseCircle
                             size={20}
                             color="#dc2626"
@@ -531,7 +541,7 @@ export default function Dashboard() {
                             HORA PARADA
                         </span>
 
-                        <strong>
+                        <strong className="valor-horas-trabalhadas">
                             {metrics
                                 ?.horasParadas ||
                                 '00:00'}{' '}
@@ -539,7 +549,17 @@ export default function Dashboard() {
                         </strong>
                     </div>
 
-                    <div className="kpi-card verde">
+                    <div className="kpi-card verde kpi-horas-trabalhadas">
+                        <div className="dias-trabalhados-indicador">
+                            <small>
+                                DIAS
+                            </small>
+
+                            <strong>
+                                {metrics?.diasTotais || '0d 00h'}
+                            </strong>
+                        </div>
+
                         <Calculator
                             size={20}
                             color="#6b7280"
@@ -549,7 +569,7 @@ export default function Dashboard() {
                             TOTAL DE HORAS
                         </span>
 
-                        <strong>
+                        <strong className="valor-horas-trabalhadas">
                             {metrics
                                 ?.horasTotais ||
                                 '00:00'}{' '}

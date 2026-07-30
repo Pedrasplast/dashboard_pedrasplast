@@ -564,6 +564,20 @@ export const useDashboardMetrics = (
                 horasParadasCartaoDec,
 
             /*
+             * Dias parados.
+             */
+            diasParados:
+                formatarDiasEHoras(
+                    horasParadasCartaoDec
+                ),
+
+            diasParadosDec:
+                (
+                    horasParadasCartaoDec /
+                    24
+                ).toFixed(2),
+
+            /*
              * Todas as paradas.
              * Mantido para conferência.
              */
@@ -593,6 +607,20 @@ export const useDashboardMetrics = (
                 ),
 
             horasTotaisDec,
+
+            /*
+             * Dias totais.
+             */
+            diasTotais:
+                formatarDiasEHoras(
+                    horasTotaisDec
+                ),
+
+            diasTotaisDec:
+                (
+                    horasTotaisDec /
+                    24
+                ).toFixed(2),
 
             /*
              * Motivos de parada.
