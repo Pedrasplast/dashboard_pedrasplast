@@ -146,16 +146,16 @@ const formatarHorasParaHHMMSS = (
     const segundos =
         segundosTotais % 60;
 
-    return `${String(horas).padStart(
-        2,
-        '0'
-    )}:${String(minutos).padStart(
-        2,
-        '0'
-    )}:${String(segundos).padStart(
-        2,
-        '0'
-    )}`;
+    const horasFormatadas =
+        horas.toLocaleString(
+            'pt-BR'
+        );
+
+    return `${horasFormatadas}:${String(
+        minutos
+    ).padStart(2, '0')}:${String(
+        segundos
+    ).padStart(2, '0')}`;
 };
 
 /*
@@ -182,13 +182,14 @@ const formatarHorasParaHHMM = (
     const minutos =
         minutosTotais % 60;
 
-    return `${String(horas).padStart(
-        2,
-        '0'
-    )}:${String(minutos).padStart(
-        2,
-        '0'
-    )}`;
+    const horasFormatadas =
+        horas.toLocaleString(
+            'pt-BR'
+        );
+
+    return `${horasFormatadas}:${String(
+        minutos
+    ).padStart(2, '0')}`;
 };
 
 /*
@@ -226,7 +227,12 @@ const formatarDiasEHoras = (
         minutosRestantes / 60
     );
 
-    return `${dias}d ${String(
+    const diasFormatados =
+        dias.toLocaleString(
+            'pt-BR'
+        );
+
+    return `${diasFormatados}d ${String(
         horasRestantes
     ).padStart(2, '0')}h`;
 };
