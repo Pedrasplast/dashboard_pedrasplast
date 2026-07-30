@@ -255,7 +255,7 @@ export default function Dashboard() {
         useMemo(() => {
             const baseProdutos =
                 filtros.injetora ===
-                'Todos'
+                    'Todos'
                     ? rawDados
                     : rawDados.filter(
                         (registro) =>
@@ -292,18 +292,18 @@ export default function Dashboard() {
                 (registro) => {
                     if (
                         filtros.injetora !==
-                            'Todos' &&
+                        'Todos' &&
                         registro.injetora !==
-                            filtros.injetora
+                        filtros.injetora
                     ) {
                         return false;
                     }
 
                     if (
                         filtros.cod_prod !==
-                            'Todos' &&
+                        'Todos' &&
                         registro.cod_prod !==
-                            filtros.cod_prod
+                        filtros.cod_prod
                     ) {
                         return false;
                     }
@@ -319,7 +319,7 @@ export default function Dashboard() {
                         if (
                             !dataRegistro ||
                             dataRegistro <
-                                filtros.dataInicio
+                            filtros.dataInicio
                         ) {
                             return false;
                         }
@@ -331,7 +331,7 @@ export default function Dashboard() {
                         if (
                             !dataRegistro ||
                             dataRegistro >
-                                filtros.dataFim
+                            filtros.dataFim
                         ) {
                             return false;
                         }
@@ -496,7 +496,17 @@ export default function Dashboard() {
                         </strong>
                     </div>
 
-                    <div className="kpi-card verde">
+                    <div className="kpi-card verde kpi-horas-trabalhadas">
+                        <div className="dias-trabalhados-indicador">
+                            <small>
+                                DIAS
+                            </small>
+
+                            <strong>
+                                {metrics?.diasTrabalhados || '0.00'}
+                            </strong>
+                        </div>
+
                         <Clock
                             size={20}
                             color="#6b7280"
@@ -506,11 +516,8 @@ export default function Dashboard() {
                             HORA TRABALHADA
                         </span>
 
-                        <strong>
-                            {metrics
-                                ?.horasTrabalhadas ||
-                                '00:00'}{' '}
-                            hrs
+                        <strong className="valor-horas-trabalhadas">
+                            {metrics?.horasTrabalhadas || '00:00'} hrs
                         </strong>
                     </div>
 

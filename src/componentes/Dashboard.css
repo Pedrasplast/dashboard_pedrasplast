@@ -573,3 +573,58 @@
     max-height: 430px;
   }
 }
+
+/* =====================================================
+   DIAS TRABALHADOS DENTRO DO CARD DE HORAS
+===================================================== */
+
+.kpi-horas-trabalhadas {
+  position: relative;
+}
+
+.dias-trabalhados-indicador {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+
+  padding: 6px 9px;
+
+  background: #f1f5f9;
+  border: 1px solid #dbe5f0;
+  border-radius: 8px;
+}
+
+.dias-trabalhados-indicador small {
+  color: #64748b;
+  font-size: 0.58rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.06em;
+}
+
+.dias-trabalhados-indicador strong {
+  margin: 0;
+
+  color: var(--logo-azul-escuro, #0b1f5e);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.1;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.valor-horas-trabalhadas {
+  font-size: 1.48rem;
+}
+
+@media (max-width: 640px) {
+  .dias-trabalhados-indicador {
+    left: 12px;
+    bottom: 12px;
+  }
+}

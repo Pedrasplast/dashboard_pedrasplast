@@ -1,6 +1,43 @@
 import { useMemo } from 'react';
 
-// Converte HH:MM:SS ou número decimal para horas decimais
+/*
+ * Converte valores numéricos do banco com segurança.
+ * Aceita número e texto com vírgula decimal.
+ */
+const converterNumero = (valor) => {
+    if (
+        valor === null ||
+        valor === undefined ||
+        valor === ''
+    ) {
+        return 0;
+    }
+
+    if (typeof valor === 'number') {
+        return Number.isFinite(valor)
+            ? valor
+            : 0;
+    }
+
+    const numero = Number.parseFloat(
+        String(valor)
+            .trim()
+            .replace(',', '.')
+    );
+
+    return Number.isFinite(numero)
+        ? numero
+        : 0;
+};
+
+/*
+ * Converte HH:MM:SS, HH:MM ou horas decimais
+ * para horas decimais.
+ *
+ * O hook lê os dados já gravados no banco.
+ * Portanto, um número como 2,5 representa
+ * 2 horas e 30 minutos.
+ */
 const converterTempoParaHoras = (tempo) => {
     if (
         tempo === null ||
@@ -10,22 +47,52 @@ const converterTempoParaHoras = (tempo) => {
         return 0;
     }
 
-    // Número armazenado como fração de dia
+    /*
+     * Número armazenado diretamente como horas.
+     */
     if (typeof tempo === 'number') {
-        return tempo * 24;
+        return Number.isFinite(tempo)
+            ? Math.max(0, tempo)
+            : 0;
     }
 
     const texto = String(tempo).trim();
 
-    // Duração no formato HH:MM:SS
-    if (texto.includes(':')) {
-        const partes = texto
-            .split(':')
-            .map(Number);
+    if (!texto) {
+        return 0;
+    }
 
-        const horas = partes[0] || 0;
-        const minutos = partes[1] || 0;
-        const segundos = partes[2] || 0;
+    /*
+     * Aceita:
+     *
+     * HH:MM
+     * HH:MM:SS
+     * HHH:MM:SS
+     */
+    const correspondencia = texto.match(
+        /^(\d+):(\d{1,2})(?::(\d{1,2}))?$/
+    );
+
+    if (correspondencia) {
+        const horas =
+            Number(correspondencia[1]);
+
+        const minutos =
+            Number(correspondencia[2]);
+
+        const segundos =
+            Number(correspondencia[3] || 0);
+
+        /*
+         * Impede durações inválidas,
+         * como 02:75:90.
+         */
+        if (
+            minutos >= 60 ||
+            segundos >= 60
+        ) {
+            return 0;
+        }
 
         return (
             horas +
@@ -34,18 +101,24 @@ const converterTempoParaHoras = (tempo) => {
         );
     }
 
+    /*
+     * Número decimal em texto.
+     *
+     * Exemplo:
+     * "2,5" = 2 horas e 30 minutos.
+     */
     const numero = Number.parseFloat(
         texto.replace(',', '.')
     );
 
-    if (Number.isFinite(numero)) {
-        return numero * 24;
-    }
-
-    return 0;
+    return Number.isFinite(numero)
+        ? Math.max(0, numero)
+        : 0;
 };
 
-// Formata horas decimais em HH:MM:SS
+/*
+ * Formata horas decimais em HH:MM:SS.
+ */
 const formatarHorasParaHHMMSS = (
     totalHoras
 ) => {
@@ -65,7 +138,9 @@ const formatarHorasParaHHMMSS = (
     );
 
     const minutos = Math.floor(
-        (segundosTotais % 3600) / 60
+        (
+            segundosTotais % 3600
+        ) / 60
     );
 
     const segundos =
@@ -83,7 +158,9 @@ const formatarHorasParaHHMMSS = (
     )}`;
 };
 
-// Formata horas decimais em HH:MM
+/*
+ * Formata horas decimais em HH:MM.
+ */
 const formatarHorasParaHHMM = (
     totalHoras
 ) => {
@@ -114,22 +191,72 @@ const formatarHorasParaHHMM = (
     )}`;
 };
 
-// Normaliza textos para comparação
+/*
+ * Converte horas trabalhadas em
+ * dias de 24 horas e horas restantes.
+ */
+const formatarDiasEHoras = (
+    totalHoras
+) => {
+    if (
+        !Number.isFinite(totalHoras) ||
+        totalHoras <= 0
+    ) {
+        return '0d 00h';
+    }
+
+    const minutosTotais = Math.round(
+        totalHoras * 60
+    );
+
+    const dias = Math.floor(
+        minutosTotais /
+        (
+            24 * 60
+        )
+    );
+
+    const minutosRestantes =
+        minutosTotais %
+        (
+            24 * 60
+        );
+
+    const horasRestantes = Math.floor(
+        minutosRestantes / 60
+    );
+
+    return `${dias}d ${String(
+        horasRestantes
+    ).padStart(2, '0')}h`;
+};
+
+/*
+ * Normaliza textos para comparação.
+ */
 const normalizarTexto = (valor) => {
-    return String(valor || '')
+    return String(valor ?? '')
         .trim()
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
+        .replace(
+            /[\u0300-\u036f]/g,
+            ''
+        )
+        .replace(/\s+/g, ' ');
 };
 
-// Normaliza os tipos
+/*
+ * Normaliza os valores de tipo.
+ */
 const normalizarTipo = (tipo) => {
     return normalizarTexto(tipo)
         .replace(/\s+/g, '');
 };
 
-// Verifica se o Tipo 3 está selecionado
+/*
+ * Verifica se o Tipo 3 está selecionado.
+ */
 const tipo3EstaSelecionado = (
     tiposSelecionados
 ) => {
@@ -146,9 +273,11 @@ const tipo3EstaSelecionado = (
         const numeroEncontrado =
             valorNormalizado.match(/\d+/);
 
-        return (
+        return Boolean(
             numeroEncontrado &&
-            Number(numeroEncontrado[0]) === 3
+            Number(
+                numeroEncontrado[0]
+            ) === 3
         );
     });
 };
@@ -164,13 +293,15 @@ export const useDashboardMetrics = (
                 : [];
 
         const listaTiposSelecionados =
-            Array.isArray(tiposSelecionados)
+            Array.isArray(
+                tiposSelecionados
+            )
                 ? tiposSelecionados
                 : [tiposSelecionados];
 
         /*
-         * Tipos usados somente para filtrar
-         * o gráfico de motivos.
+         * O filtro de tipo é aplicado somente
+         * ao gráfico de motivos.
          */
         const tiposSelecionadosSet =
             new Set(
@@ -179,7 +310,9 @@ export const useDashboardMetrics = (
                         (tipo) =>
                             tipo !== null &&
                             tipo !== undefined &&
-                            String(tipo).trim() !== ''
+                            String(
+                                tipo
+                            ).trim() !== ''
                     )
                     .map(normalizarTipo)
             );
@@ -188,8 +321,13 @@ export const useDashboardMetrics = (
             tiposSelecionadosSet.size > 0;
 
         /*
-         * Tipo 3 controla a inclusão das três
-         * descrições no cartão Hora Parada.
+         * O Tipo 3 controla a inclusão de:
+         *
+         * - Final de Semana / sem expediente
+         * - Feriado sem expediente
+         * - Turno Reduzido
+         *
+         * no cartão Hora Parada.
          */
         const incluirParadasTipo3NoCartao =
             tipo3EstaSelecionado(
@@ -199,33 +337,34 @@ export const useDashboardMetrics = (
         let totalConforme = 0;
         let totalDanificadas = 0;
 
+        /*
+         * Soma somente registros com
+         * status Produzindo.
+         */
         let horasTrabalhadasDec = 0;
 
         /*
-         * Total completo das paradas.
-         * Utilizado para manter o cartão
-         * Total de Horas como estava.
+         * Soma todas as paradas.
          */
         let horasParadasTotalDec = 0;
 
         /*
-         * Valor exibido no cartão Hora Parada.
+         * Soma apenas as paradas que estão
+         * sendo exibidas no cartão.
          */
         let horasParadasCartaoDec = 0;
 
         const motivosMap = {};
 
-        for (const registro of safeDados) {
-            /*
-             * Esses indicadores não são alterados
-             * pelo filtro de tipo.
-             */
-            totalConforme += Number(
-                registro.conforme || 0
+        for (
+            const registro of safeDados
+        ) {
+            totalConforme += converterNumero(
+                registro.conforme
             );
 
-            totalDanificadas += Number(
-                registro.danificada || 0
+            totalDanificadas += converterNumero(
+                registro.danificada
             );
 
             const status =
@@ -239,22 +378,29 @@ export const useDashboardMetrics = (
                 );
 
             /*
-             * Hora Trabalhada permanece igual.
+             * Horas trabalhadas.
              */
-            if (status === 'produzindo') {
+            if (
+                status === 'produzindo'
+            ) {
                 horasTrabalhadasDec +=
                     duracao;
 
                 continue;
             }
 
-            if (status !== 'indisponivel') {
+            /*
+             * Somente registros indisponíveis
+             * entram como parada.
+             */
+            if (
+                status !== 'indisponivel'
+            ) {
                 continue;
             }
 
             /*
-             * Soma todas as paradas para manter
-             * o Total de Horas completo.
+             * Total geral de paradas.
              */
             horasParadasTotalDec +=
                 duracao;
@@ -264,14 +410,6 @@ export const useDashboardMetrics = (
                     registro.motivo
                 );
 
-            /*
-             * As três descrições associadas
-             * ao Tipo 3 são:
-             *
-             * - Final de Semana/ sem expediente
-             * - Feriado sem expediente
-             * - Turno Reduzido
-             */
             const ehParadaTipo3 =
                 motivoNormalizado.includes(
                     'final de semana'
@@ -284,8 +422,7 @@ export const useDashboardMetrics = (
                 );
 
             /*
-             * Demais motivos entram sempre
-             * no cartão Hora Parada.
+             * Paradas comuns entram sempre.
              */
             if (!ehParadaTipo3) {
                 horasParadasCartaoDec +=
@@ -293,9 +430,8 @@ export const useDashboardMetrics = (
             }
 
             /*
-             * As três descrições acima entram
-             * somente quando o Tipo 3 estiver
-             * selecionado.
+             * Paradas especiais entram apenas
+             * quando o Tipo 3 estiver selecionado.
              */
             if (
                 ehParadaTipo3 &&
@@ -306,14 +442,7 @@ export const useDashboardMetrics = (
             }
 
             /*
-             * FILTRO DO GRÁFICO
-             *
-             * Sem tipo marcado:
-             * mostra todos os motivos.
-             *
-             * Com tipo marcado:
-             * mostra apenas os motivos dos
-             * tipos selecionados.
+             * Filtro de tipo somente no gráfico.
              */
             const tipoRegistro =
                 normalizarTipo(
@@ -328,7 +457,9 @@ export const useDashboardMetrics = (
 
             if (
                 incluirNoGrafico &&
-                registro.motivo
+                String(
+                    registro.motivo ?? ''
+                ).trim() !== ''
             ) {
                 const motivo =
                     String(
@@ -356,8 +487,18 @@ export const useDashboardMetrics = (
                 : 0;
 
         /*
-         * Mantém o Total de Horas como estava:
-         * trabalhadas + todas as paradas.
+         * TOTAL DE HORAS DINÂMICO
+         *
+         * Usa exatamente:
+         *
+         * Horas Trabalhadas +
+         * Hora Parada exibida no cartão.
+         *
+         * Quando o Tipo 3 for marcado,
+         * as paradas especiais entram no total.
+         *
+         * Quando o Tipo 3 não estiver marcado,
+         * elas não entram no total.
          */
         const horasTotaisDec =
             horasTrabalhadasDec +
@@ -365,31 +506,101 @@ export const useDashboardMetrics = (
 
         return {
             totalConforme,
+
             totalDanificadas,
 
             qualidade:
                 qualidade.toFixed(1),
 
+            /*
+             * Horas trabalhadas.
+             */
             horasTrabalhadas:
                 formatarHorasParaHHMM(
                     horasTrabalhadasDec
                 ),
 
+            horasTrabalhadasComSegundos:
+                formatarHorasParaHHMMSS(
+                    horasTrabalhadasDec
+                ),
+
+            horasTrabalhadasDec,
+
+            /*
+             * Dias trabalhados.
+             */
+            diasTrabalhados:
+                formatarDiasEHoras(
+                    horasTrabalhadasDec
+                ),
+
+            diasTrabalhadosDec:
+                (
+                    horasTrabalhadasDec /
+                    24
+                ).toFixed(2),
+
+            /*
+             * Hora parada dinâmica.
+             */
             horasParadas:
                 formatarHorasParaHHMM(
                     horasParadasCartaoDec
                 ),
 
+            horasParadasComSegundos:
+                formatarHorasParaHHMMSS(
+                    horasParadasCartaoDec
+                ),
+
+            horasParadasDec:
+                horasParadasCartaoDec,
+
+            /*
+             * Todas as paradas.
+             * Mantido para conferência.
+             */
+            horasParadasTotal:
+                formatarHorasParaHHMM(
+                    horasParadasTotalDec
+                ),
+
+            horasParadasTotalComSegundos:
+                formatarHorasParaHHMMSS(
+                    horasParadasTotalDec
+                ),
+
+            horasParadasTotalDec,
+
+            /*
+             * Total de horas dinâmico.
+             */
             horasTotais:
                 formatarHorasParaHHMM(
                     horasTotaisDec
                 ),
 
+            horasTotaisComSegundos:
+                formatarHorasParaHHMMSS(
+                    horasTotaisDec
+                ),
+
+            horasTotaisDec,
+
+            /*
+             * Motivos de parada.
+             */
             motivos:
-                Object.entries(motivosMap)
+                Object.entries(
+                    motivosMap
+                )
                     .map(
-                        ([name, value]) => ({
+                        (
+                            [name, value]
+                        ) => ({
                             name,
+
                             value,
 
                             formattedValue:
@@ -400,7 +611,8 @@ export const useDashboardMetrics = (
                     )
                     .sort(
                         (a, b) =>
-                            b.value - a.value
+                            b.value -
+                            a.value
                     )
         };
     }, [
